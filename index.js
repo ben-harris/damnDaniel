@@ -1,114 +1,152 @@
-(function() {
-  // The width and height of the captured photo. We will set the
-  // width to the value defined here, but the height will be
-  // calculated based on the aspect ratio of the input stream.
+// The width and height of the captured photo. We will set the
+// width to the value defined here, but the height will be
+// calculated based on the aspect ratio of the input stream.
 
-  var width = 320;    // We will scale the photo width to this
-  var height = 0;     // This will be computed based on the input stream
+var width = 320;    // We will scale the photo width to this
+var height = 0;     // This will be computed based on the input stream
 
-  // |streaming| indicates whether or not we're currently streaming
-  // video from the camera. Obviously, we start at false.
+// |streaming| indicates whether or not we're currently streaming
+// video from the camera. Obviously, we start at false.
 
-  var streaming = false;
+var streaming = false;
 
-  // The various HTML elements we need to configure or control. These
-  // will be set by the startup() function.
+// The various HTML elements we need to configure or control. These
+// will be set by the startup() function.
 
-  var video = null;
-  var canvas = null;
-  var photo = null;
-  var startbutton = null;
+var video = null;
+var canvas = null;
+var photo = null;
+var startbutton = null;
 
-  function startup() {
-    video = document.getElementById('video');
-    canvas = document.getElementById('canvas');
-    photo = document.getElementById('photo');
-    startbutton = document.getElementById('startbutton');
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
 
-    navigator.getMedia = ( navigator.getUserMedia ||
-                           navigator.webkitGetUserMedia ||
-                           navigator.mozGetUserMedia ||
-                           navigator.msGetUserMedia);
+function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
 
-    navigator.getMedia(
-      {
-        video: true,
-        audio: false
-      },
-      function(stream) {
-        if (navigator.mozGetUserMedia) {
-          video.mozSrcObject = stream;
-        } else {
-          var vendorURL = window.URL || window.webkitURL;
-          video.src = vendorURL.createObjectURL(stream);
-        }
-        video.play();
-      },
-      function(err) {
-        console.log("An error occured! " + err);
-      }
-    );
+// Fill the photo with an indication that none has been
+// captured.
 
-    video.addEventListener('canplay', function(ev){
-      if (!streaming) {
-        height = video.videoHeight / (video.videoWidth/width);
+function clearphoto() {
+  var context = canvas.getContext('2d');
+  context.fillStyle = "#AAA";
+  context.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Firefox currently has a bug where the height can't be read from
-        // the video, so we will make assumptions if this happens.
+  var data = canvas.toDataURL('image/png');
+  photo.setAttribute('src', data);
 
-        if (isNaN(height)) {
-          height = width / (4/3);
-        }
+  var image = photo;
+  image.onload = function(){
+    var colorThief = new ColorThief();
+    var rgbColor = colorThief.getColor(image);
+    var hexColor = rgbToHex(rgbColor[0], rgbColor[1], rgbColor[2]);
 
-        video.setAttribute('width', width);
-        video.setAttribute('height', height);
-        canvas.setAttribute('width', width);
-        canvas.setAttribute('height', height);
-        streaming = true;
-      }
-    }, false);
+    var colorInfo = ntc.name(hexColor);
+    var colorOut = colorInfo[0];
+    var colorName = colorInfo[1];
 
-    startbutton.addEventListener('click', function(ev){
-      takepicture();
-      ev.preventDefault();
-    }, false);
+    var voice = 'ukenglishfemale2',
+       speed = 0,
+       pitch = 0;
 
-    clearphoto();
-  }
+    var apiKey = '34b06ef0ba220c09a817fe7924575123';
 
-  // Fill the photo with an indication that none has been
-  // captured.
+    var url = 'https://api.ispeech.org/api/rest.mp3' +
+             '?apikey=' + apiKey +
+             '&action=convert' +
+             '&voice=' + voice +
+             '&speed=' + speed +
+             '&pitch=' + pitch +
+             '&text=' + colorName + ' coloured clothing item.';
 
-  function clearphoto() {
-    var context = canvas.getContext('2d');
-    context.fillStyle = "#AAA";
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    var outputColor = document.querySelector('.outputColor');
+    var startOutput = document.querySelector('#startAudio');
+    var audioOutput = document.querySelector('#outputAudio');
+    outputColor.style.background = colorOut;
+    outputColor.innerHTML = colorName;
+    audioOutput.src = url;
+    startOutput.play();
+
+    startOutput.addEventListener('ended', function(){
+      audioOutput.play();
+    });
+  };
+
+}
+
+// Capture a photo by fetching the current contents of the video
+// and drawing it into a canvas, then converting that to a PNG
+// format data URL. By drawing it on an offscreen canvas and then
+// drawing that to the screen, we can change its size and/or apply
+// other changes before drawing it.
+
+function takepicture() {
+  var context = canvas.getContext('2d');
+  if (width && height) {
+    canvas.width = width;
+    canvas.height = height;
+    context.drawImage(video, 0, 0, width, height);
 
     var data = canvas.toDataURL('image/png');
     photo.setAttribute('src', data);
+  } else {
+    clearphoto();
   }
+}
 
-  // Capture a photo by fetching the current contents of the video
-  // and drawing it into a canvas, then converting that to a PNG
-  // format data URL. By drawing it on an offscreen canvas and then
-  // drawing that to the screen, we can change its size and/or apply
-  // other changes before drawing it.
+function startup() {
+  video = document.getElementById('video');
+  canvas = document.getElementById('canvas');
+  photo = document.getElementById('photo');
+  startbutton = document.getElementById('startbutton');
 
-  function takepicture() {
-    var context = canvas.getContext('2d');
-    if (width && height) {
-      canvas.width = width;
-      canvas.height = height;
-      context.drawImage(video, 0, 0, width, height);
+  navigator.getMedia = ( navigator.getUserMedia ||
+                         navigator.webkitGetUserMedia ||
+                         navigator.mozGetUserMedia ||
+                         navigator.msGetUserMedia);
 
-      var data = canvas.toDataURL('image/png');
-      photo.setAttribute('src', data);
-    } else {
-      clearphoto();
+  navigator.getMedia({ video: true, audio: false }, function(stream) {
+      if (navigator.mozGetUserMedia) {
+        video.mozSrcObject = stream;
+      } else {
+        var vendorURL = window.URL || window.webkitURL;
+        video.src = vendorURL.createObjectURL(stream);
+      }
+      video.play();
+    },
+    function(err) {
+      console.log("An error occured! " + err);
     }
-  }
+  );
 
-  // Set up our event listener to run the startup process
-  // once loading is complete.
-  window.addEventListener('load', startup, false);
-})();
+  video.addEventListener('canplay', function(ev){
+    if (!streaming) {
+      height = video.videoHeight / (video.videoWidth/width);
+
+      // Firefox currently has a bug where the height can't be read from
+      // the video, so we will make assumptions if this happens.
+
+      if (isNaN(height)) {
+        height = width / (4/3);
+      }
+
+      video.setAttribute('width', width);
+      video.setAttribute('height', height);
+      canvas.setAttribute('width', width);
+      canvas.setAttribute('height', height);
+      streaming = true;
+    }
+  }, false);
+
+  startbutton.addEventListener('click', function(ev){
+    takepicture();
+    ev.preventDefault();
+  }, false);
+
+  clearphoto();
+}
+
+document.addEventListener('DOMContentLoaded', startup, false);
