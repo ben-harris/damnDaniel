@@ -40,6 +40,7 @@ body {
 }
 
 .splash {
+  overflow: hidden;
   z-index: 1;
   position: absolute;
   top: 0; right: 0; left: 0; bottom: 0;
@@ -73,5 +74,16 @@ body {
 @keyframes fadeOut {
   to {
     opacity: 0;
+  }
+}
+
+.daniel {
+  animation: danielDance 2.5s ease-out infinite;
+}
+
+@keyframes danielDance {
+  50% {
+    -webkit-filter: hue-rotate(360deg);
+    transform: translate(20%, -1%) rotate(10deg) scale(1.1);
   }
 }
