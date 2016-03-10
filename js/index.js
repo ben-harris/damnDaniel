@@ -138,7 +138,6 @@ function startup() {
   var audioOutput = document.querySelector('#outputAudio');
 
   startButtonEl.addEventListener('click', function(event) {
-    console.log('start button pressed');
     splashAudio.play();
     damnnn();
 
@@ -176,6 +175,8 @@ function startup() {
 }
 
 function damnnn() {
+  var outputColor = document.querySelector('.outputColor');
+
   getUserMedia({ audio: false, video: { facingMode: { exact: 'environment' } } })
   .then(function(stream) {
     if (navigator.mozGetUserMedia) {
@@ -188,7 +189,10 @@ function damnnn() {
     video.play();
   })
   .catch(function(error) {
-    console.log('An error occured! ' + error);
+    outputColor.style.background = 'red';
+    outputColor.style.color = 'white';
+    outputColor.innerHTML = 'Can\'t get the camera :¬( ahhhh';
+    console.log('An error occurred! ' + error);
   });
 
   video.addEventListener('canplay', function(event){
