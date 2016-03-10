@@ -1,0 +1,77 @@
+*::before,
+*,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+}
+
+#video {
+  display: block;
+  width: 100%;
+  height: 80vh;
+  background: black;
+}
+
+#canvas,
+#splashAudio,
+#startAudio,
+#outputAudio,
+#photo {
+  display: none;
+}
+
+.outputColor {
+  display: block;
+  width: 100%;
+  padding: 1em;
+  height: 20vh;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  font-size: 2.5em;
+  text-align: center;
+}
+
+.splash {
+  z-index: 1;
+  position: absolute;
+  top: 0; right: 0; left: 0; bottom: 0;
+  display: flex;
+
+  background: white;
+}
+
+.splash section {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+}
+
+.splash h1 {
+  margin: 1em 0;
+}
+
+.start-button {
+  margin: 1em auto;
+  padding: 1em;
+  font-size: 3em;
+}
+
+.splash--hidden {
+  animation: fadeOut 1s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
