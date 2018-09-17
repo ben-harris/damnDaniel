@@ -19,44 +19,6 @@ var photo;
 
 var takenPicture = false;
 
-function getUserMedia(constraints){
-  return new Promise(function(resolve, reject) {
-    var promisifiedOldGUM = function(constraints, successCallback, errorCallback) {
-      // first get ahold of getUserMedia, if present
-      var getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia);
-
-      // some browsers just don't implement it - return a rejected promise with an error to keep a consistent interface
-      if (!getUserMedia) {
-        return Promise.reject(new Error('getUserMedia is not implemented in this browser'));
-      }
-
-      // convert new contraints to old
-      constraints.video = !!constraints.video;
-
-      // otherwise, wrap the call to the old navigator.getUserMedia with a Promise
-      return new Promise(function(successCallback, errorCallback) {
-        getUserMedia.call(navigator, constraints, successCallback, errorCallback);
-      });
-    }
-
-    // older browsers might not implement mediaDevices at all, so we set an empty object first
-    if (navigator.mediaDevices === undefined) {
-      navigator.mediaDevices = {};
-    }
-
-    // some browsers partially implement mediaDevices. We can't just assign an object
-    // with getUserMedia as it would overwrite existing properties.
-    // here, we will just add the getUserMedia property if it's missing.
-    if (navigator.mediaDevices.getUserMedia === undefined) {
-      navigator.mediaDevices.getUserMedia = promisifiedOldGUM;
-    }
-
-    navigator.mediaDevices.getUserMedia(constraints)
-      .then(resolve)
-      .catch(reject);
-  });
-};
-
 function componentToHex(c) {
   var hex = c.toString(16);
   return hex.length == 1 ? '0' + hex : hex;
@@ -123,11 +85,6 @@ function startup() {
   photo = document.getElementById('photo');
   var startButtonEl = document.querySelector('.start-button');
 
-  navigator.getMedia = ( navigator.getUserMedia ||
-                         navigator.webkitGetUserMedia ||
-                         navigator.mozGetUserMedia ||
-                         navigator.msGetUserMedia);
-
 
   var splashEl = document.querySelector('.splash');
 
@@ -177,23 +134,20 @@ function startup() {
 function damnnn() {
   var outputColor = document.querySelector('.outputColor');
 
-  getUserMedia({ audio: false, video: { facingMode: { exact: 'environment' } } })
-  .then(function(stream) {
-    if (navigator.mozGetUserMedia) {
-      video.mozSrcObject = stream;
-    } else {
+  
+  navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: "environment" } })
+    .then(function(stream) {
       var vendorURL = window.URL || window.webkitURL;
       video.src = vendorURL.createObjectURL(stream);
-    }
 
-    video.play();
-  })
-  .catch(function(error) {
-    outputColor.style.background = 'red';
-    outputColor.style.color = 'white';
-    outputColor.innerHTML = 'Can\'t get the camera :¬( ahhhh';
-    console.log('An error occurred! ' + error);
-  });
+      video.play();
+    })
+    .catch(function(error) {
+      outputColor.style.background = 'red';
+      outputColor.style.color = 'white';
+      outputColor.innerHTML = 'Can\'t get the camera :¬( ahhhh';
+      console.log('An error occurred! ', error);
+    });
 
   video.addEventListener('canplay', function(event){
     if (!streaming) {
